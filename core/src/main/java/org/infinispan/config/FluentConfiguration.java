@@ -23,8 +23,6 @@
 
 package org.infinispan.config;
 
-import java.util.List;
-
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.group.Group;
@@ -35,9 +33,11 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.hash.Hash;
 
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -176,6 +176,14 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @return this TransactionConfig
        */
       TransactionConfig transactionManagerLookup(TransactionManagerLookup transactionManagerLookup);
+
+      /**
+       * Configure Transaction Synchronization Registry lookup directly using an instance of TransactionManagerLookup
+       *
+       * @param transactionSynchronizationRegistryLookup instance to use as lookup
+       * @return this TransactionConfig
+       */
+      TransactionConfig transactionSynchronizationRegistryLookup(TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup);
 
       /**
        * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be
@@ -566,23 +574,23 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       L1Config onRehash(Boolean onRehash);
 
       L1Config disable();
-      
+
       /**
        * <p>
        * Determines whether a multicast or a web of unicasts are used when performing L1 invalidations.
        * </p>
-       * 
+       *
        * <p>
        * By default multicast will be used.
        * </p>
-       * 
+       *
        * <p>
-       * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast 
+       * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast
        * will be always be used.
        * </p>
-       * 
+       *
        * @param threshold the threshold over which to use a multicast
-       * 
+       *
        */
       L1Config invalidationThreshold(Integer threshold);
    }
@@ -630,36 +638,36 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @param rehashEnabled
        */
       HashConfig rehashEnabled(Boolean rehashEnabled);
-      
+
       /**
        * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes
        * at ...
-       * 
+       *
        * If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash
        * must be used if you wish to take advnatage of virtual nodes.
-       * 
+       *
        * A default of 1 is used.
-       * 
+       *
        * @param numVirtualNodes the number of virtual nodes. Must be >0.
        * @throws IllegalArgumentException if numVirtualNodes <0
-       * 
+       *
        */
       HashConfig numVirtualNodes(Integer numVirtualNodes);
-      
+
       /**
        * Enable grouping support, such that {@link Group} annotations are honoured and any configured
        * groupers will be invoked
        */
       HashConfig groupsEnabled(Boolean groupsEnabled);
-      
+
       /**
        * Controls the groupers used in distribution
-       * 
+       *
        * @param groupers the groupers to use
        * @see #getGroupers()
        */
       HashConfig groupers(List<Grouper<?>> groupers);
-      
+
       /**
        * Get's the current groupers in use
        */
@@ -685,7 +693,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @return <code>this</code>, for method chaining
        */
       IndexingConfig disable();
-      
+
       /**
        * <p>The Query engine relies on properties for configuration.</p>
        * <p>These properties are passed directly to the embedded Hibernate Search engine, so
@@ -696,7 +704,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @return <code>this</code>, for method chaining
        */
       IndexingConfig withProperties(Properties properties);
-      
+
       /**
        * <p>Defines a single property. Can be used multiple times to define all needed properties,
        * but the full set is overriden by {@link #withProperties(Properties)}.</p>
@@ -902,6 +910,10 @@ abstract class AbstractFluentConfigurationBean extends AbstractNamedCacheConfigu
 
    public FluentConfiguration.TransactionConfig transactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
       return transaction().transactionManagerLookup(transactionManagerLookup);
+   }
+
+   public FluentConfiguration.TransactionConfig transactionSynchronizationRegistryLookup(TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup) {
+      return transaction().transactionSynchronizationRegistryLookup(transactionSynchronizationRegistryLookup);
    }
 
    public FluentConfiguration.TransactionConfig syncCommitPhase(Boolean syncCommitPhase) {

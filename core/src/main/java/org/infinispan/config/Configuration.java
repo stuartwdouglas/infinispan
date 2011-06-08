@@ -23,6 +23,26 @@
 package org.infinispan.config;
 
 import org.infinispan.CacheException;
+import org.infinispan.config.FluentConfiguration.AsyncConfig;
+import org.infinispan.config.FluentConfiguration.ClusteringConfig;
+import org.infinispan.config.FluentConfiguration.CustomInterceptorPosition;
+import org.infinispan.config.FluentConfiguration.CustomInterceptorsConfig;
+import org.infinispan.config.FluentConfiguration.DataContainerConfig;
+import org.infinispan.config.FluentConfiguration.DeadlockDetectionConfig;
+import org.infinispan.config.FluentConfiguration.EvictionConfig;
+import org.infinispan.config.FluentConfiguration.ExpirationConfig;
+import org.infinispan.config.FluentConfiguration.HashConfig;
+import org.infinispan.config.FluentConfiguration.IndexingConfig;
+import org.infinispan.config.FluentConfiguration.InvocationBatchingConfig;
+import org.infinispan.config.FluentConfiguration.JmxStatisticsConfig;
+import org.infinispan.config.FluentConfiguration.L1Config;
+import org.infinispan.config.FluentConfiguration.LockingConfig;
+import org.infinispan.config.FluentConfiguration.RecoveryConfig;
+import org.infinispan.config.FluentConfiguration.StateRetrievalConfig;
+import org.infinispan.config.FluentConfiguration.StoreAsBinaryConfig;
+import org.infinispan.config.FluentConfiguration.SyncConfig;
+import org.infinispan.config.FluentConfiguration.TransactionConfig;
+import org.infinispan.config.FluentConfiguration.UnsafeConfig;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -41,14 +61,20 @@ import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ReplicationQueueImpl;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.hash.Hash;
 import org.infinispan.util.hash.MurmurHash3;
-import org.infinispan.config.FluentConfiguration.*;
 
-import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
@@ -933,21 +959,21 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setL1OnRehash(boolean l1OnRehash) {
       this.clustering.l1.setOnRehash(l1OnRehash);
    }
-   
+
    /**
     * <p>
     * Determines whether a multicast or a web of unicasts are used when performing L1 invalidations.
     * </p>
-    * 
+    *
     * <p>
     * By default multicast will be used.
     * </p>
-    * 
+    *
     * <p>
-    * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast 
+    * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast
     * will be always be used.
     * </p>
-    * 
+    *
     * @param threshold the threshold over which to use a multicast
     * @deprecated Use {@link FluentConfiguration.L1Config#invalidationThreshold(Integer)} instead
     */
@@ -955,7 +981,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setL1InvalidationThreshold(int threshold) {
       this.clustering.l1.setInvalidationThreshold(threshold);
    }
-   
+
    public int getL1InvalidationThreshold() {
    	return this.clustering.l1.invalidationThreshold;
    }
@@ -1093,7 +1119,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public boolean isIndexLocalOnly() {
       return indexing.isIndexLocalOnly();
    }
-   
+
    public TypedProperties getIndexingProperties() {
       return indexing.properties;
    }
@@ -1137,6 +1163,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public TransactionManagerLookup getTransactionManagerLookup() {
       return transaction.transactionManagerLookup;
+   }
+
+   public TransactionSynchronizationRegistryLookup getTransactionSynchronizationRegistryLookup() {
+      return transaction.transactionSynchronizationRegistryLookup;
    }
 
    /**
@@ -1254,17 +1284,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public int getNumOwners() {
       return clustering.hash.numOwners;
    }
-   
+
    public int getNumVirtualNodes() {
       return clustering.hash.numVirtualNodes;
    }
-   
+
    public boolean isGroupsEnabled() {
       return clustering.hash.groupsEnabled;
    }
-   
+
    public List<Grouper<?>> getGroupers() {
-      return clustering.hash.groupers; 
+      return clustering.hash.groupers;
    }
 
    public boolean isRehashEnabled() {
@@ -1547,6 +1577,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @XmlTransient
       protected TransactionManagerLookup transactionManagerLookup;
 
+      @XmlTransient
+      protected TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
+
       @Dynamic
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setSyncCommitPhase")
       protected Boolean syncCommitPhase = false;
@@ -1695,8 +1728,18 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return this;
       }
 
+      @Override
+      public TransactionConfig transactionSynchronizationRegistryLookup(TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup) {
+         testImmutability("transactionSynchronizationRegistryLookup");
+         this.transactionSynchronizationRegistryLookup = transactionSynchronizationRegistryLookup;
+         return this;
+      }
 
-      @XmlAttribute
+      public TransactionSynchronizationRegistryLookup getTransactionSynchronizationRegistryLookup() {
+         return transactionSynchronizationRegistryLookup;
+      }
+
+       @XmlAttribute
       public Boolean isEagerLockSingleNode() {
          return eagerLockSingleNode;
       }
@@ -3113,13 +3156,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setRehashEnabled")
       protected Boolean rehashEnabled = true;
-      
+
       @ConfigurationDocRef(bean = HashConfig.class, targetElement = "numVirtualNodes")
       protected Integer numVirtualNodes = 1;
-      
+
       @XmlTransient
       protected Boolean groupsEnabled = false;
-      
+
       @XmlTransient
       protected List<Grouper<?>> groupers = new ArrayList<Grouper<?>>();
 
@@ -3173,17 +3216,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public Integer getNumOwners() {
          return numOwners;
       }
-      
+
       @XmlAttribute
       public Integer getNumVirtualNodes() {
          return numVirtualNodes;
       }
-      
+
       public HashConfig numVirtualNodes(Integer numVirtualNodes) {
          setNumVirtualNodes(numVirtualNodes);
          return this;
       }
-      
+
       /**
        * @deprecated The visibility of this will be reduced, use {@link #numVirtualNodes(Integer)}
        */
@@ -3271,21 +3314,21 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setRehashEnabled(rehashEnabled);
          return this;
       }
-      
+
       @Override
       public HashConfig groupers(List<Grouper<?>> groupers) {
          testImmutability("groupers");
          this.groupers = groupers;
          return this;
       }
-      
+
       @Override
       public HashConfig groupsEnabled(Boolean groupsEnabled) {
          testImmutability("groupsEnabled");
          this.groupsEnabled = groupsEnabled;
          return this;
       }
-      
+
       @Override
       public List<Grouper<?>> getGroupers() {
          return groupers;
@@ -3352,10 +3395,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setL1OnRehash")
       protected Boolean onRehash = true;
-      
+
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setL1InvalidationThreshold")
       protected Integer invalidationThreshold = 0;
-      
+
       public void accept(ConfigurationBeanVisitor v) {
          v.visitL1Type(this);
       }
@@ -3417,19 +3460,19 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setOnRehash(onRehash);
          return this;
       }
-      
+
       @Override
       public L1Config invalidationThreshold(Integer threshold) {
          setInvalidationThreshold(threshold);
          return this;
       }
-      
-     
+
+
       public void setInvalidationThreshold(Integer threshold) {
          testImmutability("invalidationThreshold");
          this.invalidationThreshold = threshold;
       }
-      
+
       @XmlAttribute
       public Integer getInvalidationThreshold() {
 	      return invalidationThreshold;
@@ -3451,7 +3494,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (lifespan != null ? !lifespan.equals(l1Type.lifespan) : l1Type.lifespan != null) return false;
          if (onRehash != null ? !onRehash.equals(l1Type.onRehash) : l1Type.onRehash != null) return false;
          if (invalidationThreshold != null ? !invalidationThreshold.equals(l1Type.invalidationThreshold) : l1Type.invalidationThreshold != null) return false;
-         
+
          return true;
       }
 
@@ -4074,10 +4117,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setIndexLocalOnly(indexLocalOnly);
          return this;
       }
-      
+
       @XmlElement(name = "properties")
       protected TypedProperties properties = new TypedProperties();
-      
+
       @Override
       public IndexingConfig withProperties(Properties properties) {
          testImmutability("properties");
@@ -4120,7 +4163,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
          if (indexLocalOnly != null ? !indexLocalOnly.equals(that.indexLocalOnly) : that.indexLocalOnly != null)
             return false;
-         
+
          if (!properties.equals(that.properties))
             return false;
 
@@ -4152,7 +4195,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             throw new RuntimeException("Should not happen!", shouldNotHappen);
          }
       }
-      
+
       public String toString(){
          return "Indexing[enabled="+enabled+",localOnly="+indexLocalOnly+"]";
       }
