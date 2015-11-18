@@ -160,6 +160,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private boolean isClassLoaderInContext;
    private LocalTopologyManager localTopologyManager;
 
+   private final ThreadLocal<GetKeyValueCommand> GET_KEY_VALUE_COMMAND_CACHE = new ThreadLocal<GetKeyValueCommand>();
+
    public CacheImpl(String name) {
       this.name = name;
    }
@@ -387,9 +389,19 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final boolean containsKey(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, 1);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags);
+      GetKeyValueCommand command = getGetKeyValueCommand(key, explicitFlags);
       Object response = invoker.invoke(ctx, command);
       return response != null;
+   }
+
+   private GetKeyValueCommand getGetKeyValueCommand(Object key, EnumSet<Flag> explicitFlags) {
+      GetKeyValueCommand command = GET_KEY_VALUE_COMMAND_CACHE.get();
+      if(command == null) {
+         GET_KEY_VALUE_COMMAND_CACHE.set(command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags));
+      } else {
+         command.reset(key, explicitFlags);
+      }
+      return command;
    }
 
    @Override
@@ -407,7 +419,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final V get(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, 1);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags);
+      GetKeyValueCommand command = getGetKeyValueCommand(key, explicitFlags);
       return (V) invoker.invoke(ctx, command);
    }
 

@@ -185,4 +185,12 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
       this.isLocked = false;
    }
 
+   public void reset() {
+      this.key = null;
+      this.cacheEntry = null;
+      this.isLocked = false;
+      this.classLoader = null;
+      this.lockOwner = null;
+   }
+
 }

@@ -25,6 +25,8 @@ import javax.transaction.Transaction;
 @SurvivesRestarts
 public class NonTransactionalInvocationContextFactory extends AbstractInvocationContextFactory {
 
+   private final ThreadLocal<SingleKeyNonTxInvocationContext> SINGLE_KEY_CACHE = new ThreadLocal<>();
+
    @Inject
    public void init(Configuration config) {
       super.init(config);
@@ -33,7 +35,13 @@ public class NonTransactionalInvocationContextFactory extends AbstractInvocation
    @Override
    public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {
       if (keyCount == 1) {
-         return new SingleKeyNonTxInvocationContext(null, keyEq);
+         SingleKeyNonTxInvocationContext tx = SINGLE_KEY_CACHE.get();
+         if(tx == null) {
+            SINGLE_KEY_CACHE.set(tx = new SingleKeyNonTxInvocationContext(null, keyEq));
+         } else {
+            tx.reset();
+         }
+         return tx;
       } else if (keyCount > 0) {
          return new NonTxInvocationContext(keyCount, null, keyEq);
       }

@@ -8,6 +8,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.EnumSet;
 import java.util.Set;
 
 import static org.infinispan.commons.util.Util.toStr;
@@ -89,6 +90,13 @@ public class GetKeyValueCommand extends AbstractDataCommand implements RemoteFet
       this.remotelyFetchedValue = remotelyFetchedValue;
    }
 
+   public void reset(Object key, EnumSet<Flag> explicitFlags) {
+      this.key = key;
+      this.flags = explicitFlags;
+      this.remotelyFetchedValue = null;
+      this.setTopologyId(-1);
+   }
+
    /**
     * If the cache needs to go remotely in order to obtain the value associated to this key, then the remote value
     * is stored in this field.
@@ -106,5 +114,4 @@ public class GetKeyValueCommand extends AbstractDataCommand implements RemoteFet
             .append("}")
             .toString();
    }
-
 }
